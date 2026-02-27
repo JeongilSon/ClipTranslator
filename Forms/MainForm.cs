@@ -1,4 +1,5 @@
-﻿using ClipTranslator.Models;
+﻿using System.Runtime.InteropServices;
+using ClipTranslator.Models;
 using ClipTranslator.Services;
 
 namespace ClipTranslator.Forms;
@@ -305,9 +306,12 @@ public class MainForm : Form
     /// <summary>
     /// 기본 트레이 아이콘 생성 (코드에서 직접 그리기)
     /// </summary>
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool DestroyIcon(IntPtr handle);
+
     private static Icon CreateDefaultIcon()
     {
-        var bmp = new Bitmap(32, 32);
+        using var bmp = new Bitmap(32, 32);
         using var g = Graphics.FromImage(bmp);
         g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
@@ -321,7 +325,10 @@ public class MainForm : Form
         var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
         g.DrawString("T", font, textBrush, new RectangleF(0, 0, 32, 32), sf);
 
-        return Icon.FromHandle(bmp.GetHicon());
+        var hIcon = bmp.GetHicon();
+        var icon = (Icon)Icon.FromHandle(hIcon).Clone();
+        DestroyIcon(hIcon);
+        return icon;
     }
 
     protected override void OnFormClosing(FormClosingEventArgs e)

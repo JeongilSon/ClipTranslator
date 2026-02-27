@@ -58,8 +58,15 @@ public class ClipboardMonitor : NativeWindow, IDisposable
         }
         finally
         {
-            // 약간의 딜레이 후 플래그 해제 (WM_CLIPBOARDUPDATE가 비동기로 올 수 있음)
-            Task.Delay(100).ContinueWith(_ => _isSelfChange = false);
+            // UI 스레드 타이머를 사용하여 스레드 안전성 확보
+            var timer = new System.Windows.Forms.Timer { Interval = 200 };
+            timer.Tick += (_, _) =>
+            {
+                _isSelfChange = false;
+                timer.Stop();
+                timer.Dispose();
+            };
+            timer.Start();
         }
     }
 

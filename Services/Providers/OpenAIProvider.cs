@@ -8,18 +8,19 @@ public class OpenAIProvider : ITranslationProvider
 {
     public string Name => "OpenAI";
 
-    private readonly HttpClient _httpClient;
+    private static readonly HttpClient _httpClient = new()
+    {
+        BaseAddress = new Uri("https://api.openai.com/"),
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
+    private readonly string _apiKey;
     private readonly string _model;
 
     public OpenAIProvider(string apiKey, string model = "gpt-4o-mini")
     {
+        _apiKey = apiKey;
         _model = model;
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://api.openai.com/"),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
-        _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
     }
 
     public async Task<TranslationResult> TranslateAsync(string text, string targetLanguage, CancellationToken ct = default)
@@ -33,8 +34,8 @@ public class OpenAIProvider : ITranslationProvider
 
         try
         {
-            var systemPrompt = BuildSystemPrompt(targetLanguage);
-            var request = new
+            var systemPrompt = PromptBuilder.BuildTranslationPrompt(targetLanguage);
+            var requestBody = new
             {
                 model = _model,
                 messages = new object[]
@@ -46,7 +47,11 @@ public class OpenAIProvider : ITranslationProvider
                 temperature = 0.3
             };
 
-            var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", request, ct);
+            using var request = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions");
+            request.Headers.Add("Authorization", $"Bearer {_apiKey}");
+            request.Content = JsonContent.Create(requestBody);
+
+            var response = await _httpClient.SendAsync(request, ct);
             var json = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
@@ -73,15 +78,8 @@ public class OpenAIProvider : ITranslationProvider
         return result;
     }
 
-    private static string BuildSystemPrompt(string targetLanguage)
+    public void Dispose()
     {
-        return $"""
-            너는 전문 번역가야. 입력 텍스트의 언어를 자동으로 감지해.
-            - 한국어가 입력되면 → {targetLanguage}로 번역
-            - {targetLanguage}가 입력되면 → 한국어로 번역
-            - 그 외 언어가 입력되면 → 한국어로 번역
-            메신저 대화체에 맞는 자연스러운 말투로 번역해.
-            번역문만 출력하고 다른 설명은 절대 붙이지 마.
-            """;
+        GC.SuppressFinalize(this);
     }
 }

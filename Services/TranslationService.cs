@@ -19,6 +19,7 @@ public class TranslationService : IDisposable
     /// </summary>
     public void Configure(AppSettings settings)
     {
+        _currentProvider?.Dispose();
         _currentProvider = settings.SelectedProvider switch
         {
             ApiProviderType.Claude => new ClaudeProvider(settings.ClaudeApiKey, settings.ClaudeModel),

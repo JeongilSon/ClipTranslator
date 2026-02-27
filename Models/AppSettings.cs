@@ -18,9 +18,9 @@ public class AppSettings
     public string OpenAIApiKey { get; set; } = string.Empty;
     public string GeminiApiKey { get; set; } = string.Empty;
 
-    public string ClaudeModel { get; set; } = "claude-sonnet-4-5-20250929";
-    public string OpenAIModel { get; set; } = "gpt-4o-mini";
-    public string GeminiModel { get; set; } = "gemini-2.0-flash";
+    public string ClaudeModel { get; set; } = "";
+    public string OpenAIModel { get; set; } = "";
+    public string GeminiModel { get; set; } = "";
 
     /// <summary>
     /// 한국어 입력 시 번역할 기본 타겟 언어 (예: "English", "Japanese", "Chinese")
@@ -69,9 +69,10 @@ public class AppSettings
                 return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
             }
         }
-        catch
+        catch (Exception ex)
         {
             // 설정 파일 손상 시 기본값 사용
+            System.Diagnostics.Debug.WriteLine($"설정 파일 로드 실패: {ex.Message}");
         }
         return new AppSettings();
     }

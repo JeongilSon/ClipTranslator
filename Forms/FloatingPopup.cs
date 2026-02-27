@@ -98,6 +98,13 @@ public class FloatingPopup : Form
     /// </summary>
     public void ShowTranslation(string original, string translated, string providerName, int durationSeconds = 5)
     {
+        // 이전 팝업 타이머를 완전히 리셋 (Stop 후 Start로 내부 카운터 초기화)
+        _autoCloseTimer.Stop();
+        _fadeTimer.Stop();
+
+        // 에러 표시 후 정상 색상 복원
+        _lblTranslated.ForeColor = Color.FromArgb(240, 240, 240);
+
         _translatedText = translated;
         _lblOriginal.Text = original.Length > 80 ? original[..77] + "..." : original;
         _lblTranslated.Text = translated;
@@ -115,7 +122,6 @@ public class FloatingPopup : Form
 
         _opacity = 1.0;
         Opacity = 1.0;
-        _fadeTimer.Stop();
 
         _autoCloseTimer.Interval = durationSeconds * 1000;
         _autoCloseTimer.Start();
@@ -137,9 +143,6 @@ public class FloatingPopup : Form
         _autoCloseTimer.Interval = 3000;
         _autoCloseTimer.Start();
         Show();
-
-        // 색상 복원
-        _lblTranslated.ForeColor = Color.FromArgb(240, 240, 240);
     }
 
     private void PositionNearCursor()

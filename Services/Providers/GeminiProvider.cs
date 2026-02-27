@@ -8,7 +8,12 @@ public class GeminiProvider : ITranslationProvider
 {
     public string Name => "Gemini";
 
-    private readonly HttpClient _httpClient;
+    private static readonly HttpClient _httpClient = new()
+    {
+        BaseAddress = new Uri("https://generativelanguage.googleapis.com/"),
+        Timeout = TimeSpan.FromSeconds(30)
+    };
+
     private readonly string _apiKey;
     private readonly string _model;
 
@@ -16,11 +21,6 @@ public class GeminiProvider : ITranslationProvider
     {
         _apiKey = apiKey;
         _model = model;
-        _httpClient = new HttpClient
-        {
-            BaseAddress = new Uri("https://generativelanguage.googleapis.com/"),
-            Timeout = TimeSpan.FromSeconds(30)
-        };
     }
 
     public async Task<TranslationResult> TranslateAsync(string text, string targetLanguage, CancellationToken ct = default)
@@ -34,8 +34,8 @@ public class GeminiProvider : ITranslationProvider
 
         try
         {
-            var systemPrompt = BuildSystemPrompt(targetLanguage);
-            var request = new
+            var systemPrompt = PromptBuilder.BuildTranslationPrompt(targetLanguage);
+            var requestBody = new
             {
                 system_instruction = new
                 {
@@ -56,7 +56,7 @@ public class GeminiProvider : ITranslationProvider
             };
 
             var url = $"v1beta/models/{_model}:generateContent?key={_apiKey}";
-            var response = await _httpClient.PostAsJsonAsync(url, request, ct);
+            var response = await _httpClient.PostAsJsonAsync(url, requestBody, ct);
             var json = await response.Content.ReadAsStringAsync(ct);
 
             if (!response.IsSuccessStatusCode)
@@ -84,15 +84,8 @@ public class GeminiProvider : ITranslationProvider
         return result;
     }
 
-    private static string BuildSystemPrompt(string targetLanguage)
+    public void Dispose()
     {
-        return $"""
-            너는 전문 번역가야. 입력 텍스트의 언어를 자동으로 감지해.
-            - 한국어가 입력되면 → {targetLanguage}로 번역
-            - {targetLanguage}가 입력되면 → 한국어로 번역
-            - 그 외 언어가 입력되면 → 한국어로 번역
-            메신저 대화체에 맞는 자연스러운 말투로 번역해.
-            번역문만 출력하고 다른 설명은 절대 붙이지 마.
-            """;
+        GC.SuppressFinalize(this);
     }
 }

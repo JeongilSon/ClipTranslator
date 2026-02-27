@@ -29,7 +29,6 @@ public class HotkeyManager : NativeWindow, IDisposable
     public event EventHandler<int>? HotkeyPressed;
 
     private readonly Dictionary<int, string> _registeredHotkeys = new();
-    private int _nextId = 1;
     private bool _disposed;
 
     // 미리 정의된 단축키 ID
