@@ -42,7 +42,7 @@ public class ClaudeProvider : ITranslationProvider
                 system = systemPrompt,
                 messages = new[]
                 {
-                    new { role = "user", content = text }
+                    new { role = "user", content = PromptBuilder.WrapUserInput(text) }
                 }
             };
 

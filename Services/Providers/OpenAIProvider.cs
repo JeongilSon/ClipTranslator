@@ -41,7 +41,7 @@ public class OpenAIProvider : ITranslationProvider
                 messages = new object[]
                 {
                     new { role = "system", content = systemPrompt },
-                    new { role = "user", content = text }
+                    new { role = "user", content = PromptBuilder.WrapUserInput(text) }
                 },
                 max_tokens = 2048,
                 temperature = 0.3

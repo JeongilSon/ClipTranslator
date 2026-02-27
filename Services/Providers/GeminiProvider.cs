@@ -45,7 +45,7 @@ public class GeminiProvider : ITranslationProvider
                 {
                     new
                     {
-                        parts = new[] { new { text } }
+                        parts = new[] { new { text = PromptBuilder.WrapUserInput(text) } }
                     }
                 },
                 generationConfig = new
